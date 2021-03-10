@@ -6,13 +6,13 @@ public class NBody{
 		return radius;
 	}
 
-	public static Body[] readBodies(String fname){
+	public static Planet[] readBodies(String fname){
 		In in = new In(fname);
 		int range = in.readInt();
-		Body[] barr = new Body[range];
+		Planet[] barr = new Planet[range];
 		in.readDouble();
 		for ( int i=0; i<range; i++) {
-			barr[i] = new Body(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble(), in.readString());
+			barr[i] = new Planet(in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble(), in.readDouble(), in.readString());
 		}
 
 		return barr;
@@ -24,13 +24,13 @@ public class NBody{
 		double dt = Double.parseDouble(args[1]);
 		String filename = args[2];
 		double radius = readRadius(filename);
-		Body[] bodies = readBodies(filename);
+		Planet[] bodies = readBodies(filename);
 
 		/**Drawing*/
 		StdDraw.setScale(-radius, radius);
 		String background = "images/starfield.jpg";
 		StdDraw.picture(0,0, background);
-		for (Body element : bodies) {
+		for (Planet element : bodies) {
 			element.draw();
 		}
 
@@ -50,7 +50,7 @@ public class NBody{
 
 			/**Draw and Show*/
 			StdDraw.picture(0,0,background);
-			for (Body element : bodies) {
+			for (Planet element : bodies) {
 				element.draw();
 			}
 			StdDraw.show();
@@ -59,7 +59,7 @@ public class NBody{
 
 		StdOut.printf("%d\n", bodies.length);
 		StdOut.printf("%.2e\n", radius);
-		for (Body element : bodies) {
+		for (Planet element : bodies) {
 			StdOut.printf("%11.4e %11.4e %11.4e %11.4e %11.4e %12s\n", element.xxPos, element.yyPos, element.xxVel, element.yyVel, element.mass, element.imgFileName);
 		}
 	}
