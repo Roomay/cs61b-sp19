@@ -23,7 +23,7 @@ public class Planet{
 		imgFileName = b.imgFileName;
 	}
 
-	public static final double G = 6.67e-11;
+	private static final double G = 6.67e-11;
 
 	public double calcDistance(Planet b){
 		double distance = Math.sqrt(Math.pow((this.xxPos - b.xxPos),2)+Math.pow((this.yyPos - b.yyPos),2));
@@ -79,6 +79,6 @@ public class Planet{
 	}
 
 	public void draw(){
-		StdDraw.picture(xxPos, yyPos, "images\\" + imgFileName);
+		StdDraw.picture(xxPos, yyPos, "images/" + imgFileName);
 	}
 }

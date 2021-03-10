@@ -38,6 +38,7 @@ public class NBody{
 		StdDraw.enableDoubleBuffering();
 		double[] xForces = new double[bodies.length];
 		double[] yForces = new double[bodies.length];
+		StdAudio.play("audio/2001.mid");
 		for ( double interval = 0; interval <= T; interval+=dt) {
 			/**Calculation and Updates*/
 			for ( int i=0; i<bodies.length;	i++) {
@@ -62,5 +63,6 @@ public class NBody{
 		for (Planet element : bodies) {
 			StdOut.printf("%11.4e %11.4e %11.4e %11.4e %11.4e %12s\n", element.xxPos, element.yyPos, element.xxVel, element.yyVel, element.mass, element.imgFileName);
 		}
+
 	}
 }
