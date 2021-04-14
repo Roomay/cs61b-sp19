@@ -19,7 +19,7 @@ public class ArrayDeque<T> {
 
     public void addFirst(T item) {
         if (front == 0) {
-            frontResize(size * 2);
+            frontResize(size * 2 + 2);
         }
         front--;
         items[front] = item;
@@ -28,7 +28,7 @@ public class ArrayDeque<T> {
 
     public void addLast(T item) {
         if (front + size == items.length) {
-            backResize(size * 2);
+            backResize(size * 2 + 2);
         }
         items[front + size] = item;
         size++;
