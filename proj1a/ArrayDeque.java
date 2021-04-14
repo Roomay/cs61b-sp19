@@ -8,29 +8,30 @@ public class ArrayDeque<T> {
         size = 0;
         front = 4;
     }
-
+/*
     public ArrayDeque(ArrayDeque other) {
         size = other.size();
         front = other.front;
         items = (T[]) new Object[other.items.length];
         System.arraycopy(other.items, 0, items, 0, items.length);
     }
+ */
 
     public void addFirst(T item) {
         if (front == 0) {
-            frontResize(size*2);
+            frontResize(size * 2);
         }
-        front --;
+        front--;
         items[front] = item;
-        size ++;
+        size++;
     }
 
     public void addLast(T item) {
         if (front + size == items.length) {
-            backResize(size*2);
+            backResize(size * 2);
         }
         items[front + size] = item;
-        size ++;
+        size++;
     }
 
     public boolean isEmpty() {
@@ -55,11 +56,10 @@ public class ArrayDeque<T> {
     public T removeFirst() {
         if (isEmpty()) {
             return null;
-        }
-        else {
+        } else {
             T element = items[front];
-            front ++;
-            size --;
+            front++;
+            size--;
             if (items.length > 4 * size) {
                 halfSize();
             }
@@ -70,9 +70,8 @@ public class ArrayDeque<T> {
     public T removeLast() {
         if (isEmpty()) {
             return null;
-        }
-        else {
-            size --;
+        } else {
+            size--;
             T element = items[front + size];
             if (items.length > 4 * size) {
                 halfSize();
@@ -84,21 +83,20 @@ public class ArrayDeque<T> {
     public T get(int index) {
         if (index >= size || index < 0) {
             return null;
-        }
-        else {
+        } else {
             return items[front + index];
         }
     }
 
     private void frontResize(int extraSize) {
         T[] newItems = (T[]) new Object[front + size + extraSize];
-        System.arraycopy(items, 0, newItems, extraSize, size);
+        System.arraycopy(items, 0, newItems, extraSize, front + size);
         items = newItems;
         front = extraSize;
     }
     private void backResize(int extraSize) {
         T[] newItems = (T[]) new Object[front + size + extraSize];
-        System.arraycopy(items, 0, newItems, 0, size);
+        System.arraycopy(items, 0, newItems, 0, front + size);
         items = newItems;
     }
     private void halfSize() {
