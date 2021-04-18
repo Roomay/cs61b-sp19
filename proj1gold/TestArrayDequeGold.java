@@ -32,7 +32,8 @@ public class TestArrayDequeGold {
         FailureSequence msgSeq = new FailureSequence();
         Integer actual = 0;
         Integer expected = 0;
-        for (Integer i = StdRandom.uniform(10); expected.equals(actual);
+        for (Integer i = StdRandom.uniform(10);
+             (expected == null && actual == null) || (expected != null && expected.equals(actual));
              i = StdRandom.uniform(10)) {
             double ranNumberBetween0and1 = StdRandom.uniform();
             if (sad.isEmpty() || ads.isEmpty()) {
