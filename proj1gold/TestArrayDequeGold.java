@@ -13,6 +13,10 @@ public class TestArrayDequeGold {
                 removeFirst();
             }
         }
+        public void printLast() {
+            System.out.print(peekLast());
+        }
+
         public String printSeq() {
             StringBuilder a = new StringBuilder();
             for (String i: this) {
@@ -60,8 +64,8 @@ public class TestArrayDequeGold {
                     actual = sad.removeLast();
                     expected = ads.removeLast();
                 }
-                assertEquals(msgSeq.printSeq(), expected, actual);
             }
         }
+        assertEquals(msgSeq.printSeq(), expected, actual);
     }
 }
