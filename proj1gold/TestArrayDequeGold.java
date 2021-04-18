@@ -21,7 +21,6 @@ public class TestArrayDequeGold {
             return a.toString();
         }
     }
-
     @Test
     public void testStudentAndSolutionDeque() {
         StudentArrayDeque<Integer> sad = new StudentArrayDeque<>();
