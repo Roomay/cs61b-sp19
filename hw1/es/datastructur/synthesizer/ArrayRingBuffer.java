@@ -12,10 +12,10 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> implements Bound
     private int first;
     /* Index for the next enqueue. */
     private int last;
-    /* Variable for the fillCount. */
-    private int fillCount;
+
     /* Array for storing the buffer data. */
     private T[] rb;
+    private int capacity;
 
     /**
      * Create a new ArrayRingBuffer with the given capacity.
@@ -27,10 +27,12 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> implements Bound
         first = 0;
         last = 0;
         fillCount = 0;
+        this.capacity = capacity;
+
     }
 
     public int capacity() {
-        return rb.length;
+        return capacity;
     }
 
     public int fillCount() {
