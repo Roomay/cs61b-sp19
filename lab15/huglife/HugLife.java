@@ -103,7 +103,7 @@ public class HugLife {
             addCreature(12, 12, new Plip());
             addCreature(4, 3, new Plip());
         } else if (worldName.equals("strugggz")) {
-            System.out.println("You need to uncomment the strugggz test!");
+            //System.out.println("You need to uncomment the strugggz test!");
             addCreature(11, 1, new SampleCreature());
             addCreature(12, 12, new Plip());
             addCreature(3, 3, new Plip());

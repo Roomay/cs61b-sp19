@@ -82,7 +82,8 @@ public class Clorus extends Creature {
                 // Rule 3
                 if (energy() >= 1.0) {
                     action = new Action(Action.ActionType.REPLICATE, dir);
-                } /** Rule 4 */ else {
+                } /** Rule 4 */
+                else if (energy() >=0.03){
                     action = new Action(Action.ActionType.MOVE, dir);
                 }
             }
