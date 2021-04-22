@@ -53,7 +53,7 @@ public class GuitarString {
         //       Do not call StdAudio.play().
 
         Double frontItem = buffer.dequeue();
-        buffer.enqueue((frontItem + buffer.peek()) * 0.996);
+        buffer.enqueue((frontItem + buffer.peek()) * 0.5 * 0.996);
     }
 
     /* Return the double at the front of the buffer. */

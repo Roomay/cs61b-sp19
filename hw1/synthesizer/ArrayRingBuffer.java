@@ -14,7 +14,6 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
 
     /* Array for storing the buffer data. */
     private T[] rb;
-    private int capacity;
 
     /**
      * Create a new ArrayRingBuffer with the given capacity.
@@ -28,14 +27,6 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
         fillCount = 0;
         this.capacity = capacity;
 
-    }
-
-    public int capacity() {
-        return capacity;
-    }
-
-    public int fillCount() {
-        return fillCount;
     }
 
     /**
@@ -107,7 +98,7 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
             return rb[(pos - 1 + capacity()) % capacity()];
         }
     }
-
+/*
     @Override
     public boolean equals(Object o) {
         boolean result = true;
@@ -130,5 +121,6 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
             return result;
         }
     }
+    */
 }
     //  Remove all comments that say TODO when you're done.
