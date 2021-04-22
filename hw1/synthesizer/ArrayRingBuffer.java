@@ -6,7 +6,7 @@ import java.util.Iterator;
 // Make sure to add the override tag for all overridden methods
 // Make sure to make this class implement BoundedQueue<T>
 
-public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> implements BoundedQueue<T> {
+public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
     /* Index for the next dequeue or peek. */
     private int first;
     /* Index for the next enqueue. */
