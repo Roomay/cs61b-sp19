@@ -1,7 +1,8 @@
+
 public class UnionFind {
 
     //  - Add instance variables?
-    int[] verticesAffiliation;
+    private int[] verticesAffiliation;
 
     /* Creates a UnionFind data structure holding n vertices. Initially, all
        vertices are in disjoint sets. */
@@ -14,7 +15,7 @@ public class UnionFind {
 
     /* Throws an exception if v1 is not a valid index. */
     private void validate(int vertex) {
-        if (vertex >= verticesAffiliation.length) {
+        if (vertex < 0 || vertex >= verticesAffiliation.length) {
             throw new IllegalArgumentException();
         }
     }
