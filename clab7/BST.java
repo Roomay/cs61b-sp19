@@ -1,10 +1,12 @@
 import java.util.NoSuchElementException;
+import java.util.Stack;
 
 /*  @author Josh Hug, with most code created by:
  *  @author Robert Sedgewick
  *  @author Kevin Wayne
  */
 public class BST<Key extends Comparable<Key>> {
+
     /**
      * Initializes an empty BST.
      */
@@ -28,7 +30,9 @@ public class BST<Key extends Comparable<Key>> {
      * @throws IllegalArgumentException if {@code key} is {@code null}
      */
     public boolean contains(Key key) {
-        if (key == null) throw new IllegalArgumentException("argument to contains() is null");
+        if (key == null) {
+            throw new IllegalArgumentException("argument to contains() is null");
+        }
         return contains(root, key);
     }
 
@@ -39,7 +43,9 @@ public class BST<Key extends Comparable<Key>> {
      * @throws IllegalArgumentException if {@code key} is {@code null}
      */
     public void add(Key key) {
-        if (key == null) throw new IllegalArgumentException("calls put() with a null key");
+        if (key == null) {
+            throw new IllegalArgumentException("calls put() with a null key");
+        }
         root = add(root, key);
     }
 
@@ -51,12 +57,16 @@ public class BST<Key extends Comparable<Key>> {
      * @throws IllegalArgumentException if {@code key} is {@code null}
      */
     public void deleteTakingSuccessor(Key key) {
-        if (key == null) throw new IllegalArgumentException("calls deleteTakingSuccessor() with a null key");
+        if (key == null) {
+            throw new IllegalArgumentException("calls deleteTakingSuccessor() with a null key");
+        }
         root = deleteTakingSuccessor(root, key);
     }
 
     public void deleteTakingRandom(Key key) {
-        if (key == null) throw new IllegalArgumentException("calls deleteTakingRandom() with a null key");
+        if (key == null) {
+            throw new IllegalArgumentException("calls deleteTakingRandom() with a null key");
+        }
         root = deleteTakingRandom(root, key);
     }
 
@@ -66,6 +76,21 @@ public class BST<Key extends Comparable<Key>> {
         return getRandomNode(root).key;
     }
 
+    public double averageDepth() {
+        Stack<Node> traversalStack = new Stack<>();
+        int totalDepth = 0;
+        Node cur = root;
+        while (cur != null || !traversalStack.isEmpty()) {
+            while (cur != null) {
+                traversalStack.push(cur);
+                cur = cur.left;
+            }
+            Node tmp = traversalStack.pop();
+            cur = tmp.right;
+            totalDepth += depth(tmp);
+        }
+        return (double) totalDepth / (double) size();
+    }
 
     /** Private methods and variables follow. There's no need to read
      *  any of this.
@@ -77,56 +102,81 @@ public class BST<Key extends Comparable<Key>> {
         private Key key;           // sorted by key
         private Node left, right;  // left and right subtrees
         private int size;          // number of nodes in subtree
+        private int height;
 
-        public Node(Key key, int size) {
+        Node(Key key, int size) {
             this.key = key;
             this.size = size;
+            height = 0;
         }
     }
 
     /* Returns a tree with key deleted from the tree rooted at x. */
     private Node deleteTakingSuccessor(Node x, Key key) {
-        if (x == null) return null;
+        if (x == null) {
+            return null;
+        }
 
         int cmp = key.compareTo(x.key);
-        if      (cmp < 0) x.left  = deleteTakingSuccessor(x.left,  key);
-        else if (cmp > 0) x.right = deleteTakingSuccessor(x.right, key);
-        else {
-            if (x.right == null) return x.left;
-            if (x.left  == null) return x.right;
+        if      (cmp < 0) {
+            x.left  = deleteTakingSuccessor(x.left,  key);
+        } else if (cmp > 0) {
+            x.right = deleteTakingSuccessor(x.right, key);
+        } else {
+            if (x.right == null) {
+                return x.left;
+            }
+            if (x.left  == null) {
+                return x.right;
+            }
             Node t = x;
             x = min(t.right); // x points at successor
-            x.right = deleteMin(t.right); // successor points at right tree as if it had been deleted
+            x.right = deleteMin(t.right);
+            // successor points at right tree as if it had been deleted
             x.left = t.left; // successor points at left tree as it was
         }
         x.size = size(x.left) + size(x.right) + 1;
+        x.height = 1 + Math.max(height(x.left), height(x.right));
         return x;
     }
 
     private Node deleteTakingRandom(Node x, Key key) {
-        if (x == null) return null;
+        if (x == null) {
+            return null;
+        }
 
         int cmp = key.compareTo(x.key);
-        if      (cmp < 0) x.left  = deleteTakingRandom(x.left,  key);
-        else if (cmp > 0) x.right = deleteTakingRandom(x.right, key);
-        else {
-            if (x.right == null) return x.left;
-            if (x.left  == null) return x.right;
+        if      (cmp < 0) {
+            x.left  = deleteTakingRandom(x.left,  key);
+        } else if (cmp > 0) {
+            x.right = deleteTakingRandom(x.right, key);
+        } else {
+            if (x.right == null) {
+                return x.left;
+            }
+            if (x.left  == null) {
+                return x.right;
+            }
             boolean random = RandomGenerator.getRandomBoolean();
             if (random) { // use successor with 50% chance
                 Node t = x;
-                x = min(t.right); // x points at successor
-                x.right = deleteMin(t.right); // successor points at right tree as if it had been deleted
-                x.left = t.left; // successor points at left tree as it was
+                x = min(t.right);
+                // x points at successor
+                x.right = deleteMin(t.right);
+                // successor points at right tree as if it had been deleted
+                x.left = t.left;
+                // successor points at left tree as it was
             } else { // use predecessor
                 Node t = x;
                 x = max(t.left); // x points at predecessor
-                x.left = deleteMax(t.left); // predecessor points at left tree as if it had been deleted
+                x.left = deleteMax(t.left);
+                // predecessor points at left tree as if it had been deleted
                 x.right = t.right; // predecessor points at right tree as it was
             }
 
         }
         x.size = size(x.left) + size(x.right) + 1;
+        x.height = 1 + Math.max(height(x.left), height(x.right));
         return x;
     }
 
@@ -137,13 +187,18 @@ public class BST<Key extends Comparable<Key>> {
      * @throws NoSuchElementException if the BST is empty
      */
     private Key min() {
-        if (isEmpty()) throw new NoSuchElementException("calls min() with empty BST");
+        if (isEmpty()) {
+            throw new NoSuchElementException("calls min() with empty BST");
+        }
         return min(root).key;
     }
 
     private Node min(Node x) {
-        if (x.left == null) return x;
-        else                return min(x.left);
+        if (x.left == null) {
+            return x;
+        } else {
+            return min(x.left);
+        }
     }
 
     /**
@@ -153,13 +208,18 @@ public class BST<Key extends Comparable<Key>> {
      * @throws NoSuchElementException if the BST is empty
      */
     private Key max() {
-        if (isEmpty()) throw new NoSuchElementException("calls max() with empty BST");
+        if (isEmpty()) {
+            throw new NoSuchElementException("calls max() with empty BST");
+        }
         return max(root).key;
     }
 
     private Node max(Node x) {
-        if (x.right == null) return x;
-        else                 return max(x.right);
+        if (x.right == null) {
+            return x;
+        } else {
+            return max(x.right);
+        }
     }
 
     /** Gets a random node in the tree. */
@@ -177,12 +237,17 @@ public class BST<Key extends Comparable<Key>> {
 
 
     private Node add(Node x, Key key) {
-        if (x == null) return new Node(key, 1);
+        if (x == null) {
+            return new Node(key, 1);
+        }
         int cmp = key.compareTo(x.key);
-        if      (cmp < 0) x.left  = add(x.left,  key);
-        else if (cmp > 0) x.right = add(x.right, key);
-        else              ; // do nothing, key already exists
+        if      (cmp < 0) {
+            x.left  = add(x.left,  key);
+        } else if (cmp > 0) {
+            x.right = add(x.right, key);
+        } // do nothing, key already exists
         x.size = 1 + size(x.left) + size(x.right);
+        x.height = 1 + Math.max(height(x.left), height(x.right));
         return x;
     }
 
@@ -192,16 +257,21 @@ public class BST<Key extends Comparable<Key>> {
      * @throws NoSuchElementException if the BST is empty
      */
     private void deleteMin() {
-        if (isEmpty()) throw new NoSuchElementException("BST underflow");
+        if (isEmpty()) {
+            throw new NoSuchElementException("BST underflow");
+        }
         root = deleteMin(root);
     }
 
     /** Returns the root of a tree with the minimum of x deleted.
      *  That is, if I am the minimum, return my right child! */
     private Node deleteMin(Node x) {
-        if (x.left == null) return x.right;
+        if (x.left == null) {
+            return x.right;
+        }
         x.left = deleteMin(x.left);
         x.size = size(x.left) + size(x.right) + 1;
+        x.height = 1 + Math.max(height(x.left), height(x.right));
         return x;
     }
 
@@ -211,31 +281,59 @@ public class BST<Key extends Comparable<Key>> {
      * @throws NoSuchElementException if the BST is empty
      */
     private void deleteMax() {
-        if (isEmpty()) throw new NoSuchElementException("BST underflow");
+        if (isEmpty()) {
+            throw new NoSuchElementException("BST underflow");
+        }
         root = deleteMax(root);
     }
 
     private Node deleteMax(Node x) {
-        if (x.right == null) return x.left;
+        if (x.right == null) {
+            return x.left;
+        }
         x.right = deleteMax(x.right);
         x.size = size(x.left) + size(x.right) + 1;
+        x.height = 1 + Math.max(height(x.left), height(x.right));
         return x;
     }
 
     // return number of key-value pairs in BST rooted at x
     private int size(Node x) {
-        if (x == null) return 0;
-        else return x.size;
+        if (x == null) {
+            return 0;
+        }
+        return x.size;
     }
 
+    private int height(Node x) {
+        if (x == null) {
+            return 0;
+        }
+        return x.height;
+    }
+
+    private int depth(Node x) {
+        if (x == null) {
+            return 0;
+        }
+        return (height(root) - height(x));
+    }
 
     private boolean contains(Node x, Key key) {
-        if (key == null) throw new IllegalArgumentException("calls get() with a null key");
-        if (x == null) return false;
+        if (key == null) {
+            throw new IllegalArgumentException("calls get() with a null key");
+        }
+        if (x == null) {
+            return false;
+        }
         int cmp = key.compareTo(x.key);
-        if      (cmp < 0) return contains(x.left, key);
-        else if (cmp > 0) return contains(x.right, key);
-        else              return true;
+        if      (cmp < 0) {
+            return contains(x.left, key);
+        } else if (cmp > 0) {
+            return contains(x.right, key);
+        } else {
+            return true;
+        }
     }
 
 

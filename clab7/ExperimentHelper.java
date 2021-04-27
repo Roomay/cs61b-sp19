@@ -1,3 +1,7 @@
+import org.junit.Assert;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 /**
  * Created by hug.
  */
@@ -15,7 +19,11 @@ public class ExperimentHelper {
      *  N = 8, OIPL: 13
      */
     public static int optimalIPL(int N) {
-        return 0;
+        int totalLength = 0;
+        for (int i = 1; i <= N; i++) {
+            totalLength += log2(i);
+        }
+        return totalLength;
     }
 
     /** Returns the average depth for nodes in an optimal BST of
@@ -27,6 +35,22 @@ public class ExperimentHelper {
      * @return
      */
     public static double optimalAverageDepth(int N) {
-        return 0;
+        return (double) optimalIPL(N) / N;
+    }
+
+    public static void ranInsert(BST bst) {
+        bst.add(RandomGenerator.getRandomInt(5000));
+    }
+
+    public static void ranDelSuc(BST bst) {
+        bst.deleteTakingSuccessor(bst.getRandomKey());
+    }
+
+    public static void ranDelRan(BST bst) {
+        bst.deleteTakingRandom(bst.getRandomKey());
+    }
+
+    public static int log2(int n) {
+        return (int) (Math.log(n) / Math.log(2));
     }
 }
