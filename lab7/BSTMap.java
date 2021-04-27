@@ -1,6 +1,8 @@
-import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.NoSuchElementException;
 import java.util.Stack;
+import java.util.Iterator;
 
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     int size = 0;
@@ -19,6 +21,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         }
     }
 
+    @Override
     public void clear() {
         size = 0;
         root = null;
@@ -51,6 +54,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         }
     }
 
+    @Override
     public int size() {
         return size(root);
     }
@@ -86,16 +90,137 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         return node;
     }
 
+    @Override
     public Set<K> keySet() {
-        throw new UnsupportedOperationException();
+        Set<K> retSet = new TreeSet();
+        for (K key
+                :
+                this) {
+            retSet.add(key);
+        }
+        return retSet;
     }
 
+    public K min() {
+        if (size() == 0) {
+            throw new NoSuchElementException("calls min() with empty symbol table");
+        }
+        return min(root).key;
+    }
+
+    private Entry min(Entry node) {
+        if (node.left == null) {
+            return node;
+        } else {
+            return min(node.left);
+        }
+    }
+
+    private Entry deleteMin(Entry node) {
+        if (node.left == null) {
+            return node.right;
+        }
+        node.left = deleteMin(node.left);
+        node.size = size(node.left) + size(node.right) + 1;
+        return node;
+    }
+
+    private class DeletedReturn {
+        Entry newNode;
+        V deletedNodeVal;
+        DeletedReturn(Entry node) {
+            newNode = node;
+            deletedNodeVal = null;
+        }
+    }
+
+    @Override
     public V remove(K key) {
-        throw new UnsupportedOperationException();
+        if (key == null) {
+            throw new IllegalArgumentException("calls delete() with a null key");
+        }
+        DeletedReturn dr = delete(root, key);
+        root = dr.newNode;
+        return dr.deletedNodeVal;
     }
 
+    private DeletedReturn delete(Entry node, K key) {
+        DeletedReturn ret = new DeletedReturn(node);
+        if (node == null) {
+            return ret;
+        }
+        int cmp = key.compareTo(node.key);
+
+        if (cmp < 0) {
+            DeletedReturn pass = delete(node.left, key);
+            node.left = pass.newNode;
+            ret.deletedNodeVal = pass.deletedNodeVal;
+        } else if (cmp > 0) {
+            DeletedReturn pass = delete(node.right, key);
+            node.right = pass.newNode;
+            ret.deletedNodeVal = pass.deletedNodeVal;
+        } else {
+            ret.deletedNodeVal = node.val;
+            if (node.right == null) {
+                ret.newNode = node.left;
+                return ret;
+            } else if (node.left == null) {
+                ret.newNode = node.right;
+                return ret;
+            }
+            Entry tmp = node;
+            node = min(tmp.right);
+            node.right = deleteMin(tmp.right);
+            node.left = tmp.left;
+        }
+        node.size = size(node.left) + size(node.right) + 1;
+        ret.newNode = node;
+        return ret;
+    }
+
+    @Override
     public V remove(K key, V value) {
-        throw new UnsupportedOperationException();
+        if (key == null) {
+            throw new IllegalArgumentException("calls delete() with a null key");
+        }
+        DeletedReturn dr = delete(root, key, value);
+        root = dr.newNode;
+        return dr.deletedNodeVal;
+    }
+
+    private DeletedReturn delete(Entry node, K key, V value) {
+        DeletedReturn ret = new DeletedReturn(node);
+        if (node == null) {
+            return ret;
+        }
+        int cmp = key.compareTo(node.key);
+
+        if (cmp < 0) {
+            DeletedReturn pass = delete(node.left, key);
+            node.left = pass.newNode;
+            ret.deletedNodeVal = pass.deletedNodeVal;
+        } else if (cmp > 0) {
+            DeletedReturn pass = delete(node.right, key);
+            node.right = pass.newNode;
+            ret.deletedNodeVal = pass.deletedNodeVal;
+        } else if (node.val.equals(value)) {
+            ret.deletedNodeVal = node.val;
+            if (node.right == null) {
+                ret.newNode = node.left;
+                return ret;
+            } else if (node.left == null) {
+                ret.newNode = node.right;
+                return ret;
+            }
+            Entry tmp = node;
+            ret.deletedNodeVal = value;
+            node = min(tmp.right);
+            node.right = deleteMin(tmp.right);
+            node.left = tmp.left;
+        }
+        node.size = size(node.left) + size(node.right) + 1;
+        ret.newNode = node;
+        return ret;
     }
 
     @Override
