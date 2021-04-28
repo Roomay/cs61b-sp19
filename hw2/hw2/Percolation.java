@@ -8,8 +8,11 @@ public class Percolation {
 
     private int[] openStatus;
     private WeightedQuickUnionUF sites;
+    private WeightedQuickUnionUF fullSites;
     private int numberOfOpenSites;
     private int byScale;
+    private int VIRTUAL_TOP_SITE;
+    private int VIRTUAL_BOTTOM_SITE;
 
     // Create N-by-N grid, with all sites initially blocked
     public Percolation(int N) {
@@ -20,14 +23,12 @@ public class Percolation {
         for (int i = 0; i < N * N; i++) {
             openStatus[i] = SITE_STATUS_BLOCKED;
         }
-        sites = new WeightedQuickUnionUF(N * N);
-        int bottomLeft = N * (N - 1);
-        for (int i = 0; i < N; i++) {
-            sites.union(0, i);
-            sites.union(bottomLeft, bottomLeft + i);
-        }
+        sites = new WeightedQuickUnionUF(N * N + 2);
+        fullSites = new WeightedQuickUnionUF(N * N + 1);
         numberOfOpenSites = 0;
         byScale = N;
+        VIRTUAL_TOP_SITE = N * N;
+        VIRTUAL_BOTTOM_SITE = N * N + 1;
     }
 
     // Open the site (row, col) if it is not open already
@@ -39,25 +40,40 @@ public class Percolation {
         if (openStatus[site] == SITE_STATUS_BLOCKED) {
             openStatus[site] = SITE_STATUS_OPEN;
             numberOfOpenSites++;
+            // Top Virtual site check
+            if (row == 0) {
+                sites.union(site, VIRTUAL_TOP_SITE);
+                fullSites.union(site, VIRTUAL_TOP_SITE);
+            }
+            // Bottom Virtual site check
+            if (row == byScale - 1) {
+                sites.union(site, VIRTUAL_BOTTOM_SITE);
+            }
+
             int topSite = site - byScale;
             int leftSite = site - 1;
             int rightSite = site + 1;
             int bottomSite = site + byScale;
+
             // Top
             if (row > 0 && openStatus[topSite] == SITE_STATUS_OPEN) {
                 sites.union(site, topSite);
+                fullSites.union(site, topSite);
             }
             // Left
             if (col > 0 && openStatus[leftSite] == SITE_STATUS_OPEN) {
                 sites.union(site, leftSite);
+                fullSites.union(site, leftSite);
             }
             // Right
             if (col < byScale - 1 && openStatus[rightSite] == SITE_STATUS_OPEN) {
                 sites.union(site, rightSite);
+                fullSites.union(site, rightSite);
             }
             // Bottom
             if (row < byScale - 1 && openStatus[bottomSite] == SITE_STATUS_OPEN) {
                 sites.union(site, bottomSite);
+                fullSites.union(site, bottomSite);
             }
         }
     }
@@ -75,15 +91,9 @@ public class Percolation {
         if (row < 0 || col < 0 || row >= byScale || col >= byScale) {
             throw new IndexOutOfBoundsException();
         }
-        if (isOpen(row, col)) {
-            if (row == 0) {
-                return true;
-            } else {
-                int site = row * byScale + col;
-                if (sites.connected(site, 0)) {
-                    return true;
-                }
-            }
+        int site = row * byScale + col;
+        if (fullSites.connected(site, VIRTUAL_TOP_SITE)) {
+            return true;
         }
         return false;
     }
@@ -95,13 +105,7 @@ public class Percolation {
 
     // Does the system percolate?
     public boolean percolates() {
-       /*for (int i = 0; i < byScale; i++) {
-            if (isFull(byScale - 1, i)) {
-                return true;
-            }
-        }
-        return false;*/
-        return isFull(byScale - 1, byScale - 1);
+        return sites.connected(VIRTUAL_BOTTOM_SITE, VIRTUAL_TOP_SITE);
     }
 
     // use for unit testing
