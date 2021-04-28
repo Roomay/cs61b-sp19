@@ -3,8 +3,8 @@ package hw2;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
-    public static final int SITE_STATUS_OPEN = 1;
-    public static final int SITE_STATUS_BLOCKED = 0;
+    private static final int SITE_STATUS_OPEN = 1;
+    private static final int SITE_STATUS_BLOCKED = 0;
 
     private int[] openStatus;
     private WeightedQuickUnionUF sites;
@@ -21,6 +21,11 @@ public class Percolation {
             openStatus[i] = SITE_STATUS_BLOCKED;
         }
         sites = new WeightedQuickUnionUF(N * N);
+        int bottomLeft = N * (N - 1);
+        for (int i = 0; i < N; i++) {
+            sites.union(0, i);
+            sites.union(bottomLeft, bottomLeft + i);
+        }
         numberOfOpenSites = 0;
         byScale = N;
     }
@@ -70,12 +75,12 @@ public class Percolation {
         if (row < 0 || col < 0 || row >= byScale || col >= byScale) {
             throw new IndexOutOfBoundsException();
         }
-        if (row == 0) {
-            return isOpen(row, col);
-        } else {
-            int site = row * byScale + col;
-            for (int i = 0; i < byScale; i++) {
-                if (sites.connected(site, i)) {
+        if (isOpen(row, col)) {
+            if (row == 0) {
+                return true;
+            } else {
+                int site = row * byScale + col;
+                if (sites.connected(site, 0)) {
                     return true;
                 }
             }
@@ -90,12 +95,13 @@ public class Percolation {
 
     // Does the system percolate?
     public boolean percolates() {
-        for (int i = 0; i < byScale; i++) {
+       /*for (int i = 0; i < byScale; i++) {
             if (isFull(byScale - 1, i)) {
                 return true;
             }
         }
-        return false;
+        return false;*/
+        return isFull(byScale - 1, byScale - 1);
     }
 
     // use for unit testing
