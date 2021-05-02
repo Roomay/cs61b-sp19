@@ -1,9 +1,13 @@
+import java.util.Iterator;
+import java.util.LinkedList;
+
 /**
  * A String-like class that allows users to add and remove characters in the String
  * in constant time and have a constant-time hash function. Used for the Rabin-Karp
  * string-matching algorithm.
  */
-class RollingString{
+class RollingString {
+
 
     /**
      * Number of total possible int values a character can take on.
@@ -18,12 +22,36 @@ class RollingString{
     static final int PRIMEBASE = 6113;
 
     /**
+     * Private classes and methods.
+     *
+     * hashSum store current sum of hashed value;
+     * hashChar(char c, int digit) generate a hash value for a char.
+     */
+    private int hashSum;
+    private int length;
+    private LinkedList<Character> stringPiece;
+    private int hashChar(char c, int digit) {
+        if (digit == 1) {
+            return ((int) c) % PRIMEBASE;
+        }
+        return ((UNIQUECHARS  * hashChar(c, digit - 1)) % PRIMEBASE);
+        //Correctness is not guaranteed.
+    }
+
+    /**
      * Initializes a RollingString with a current value of String s.
      * s must be the same length as the maximum length.
      */
-    public RollingString(String s, int length) {
-        assert(s.length() == length);
-        /* FIX ME */
+    RollingString(String s, int length) {
+        assert (s.length() == length);
+        this.length = length;
+        hashSum = 0;
+        stringPiece = new LinkedList<>();
+        for (int i = length - 1; i >= 0; i--) { // Sum the hash in reverse string order.
+            char cur = s.charAt(i);
+            hashSum = (hashSum + hashChar(cur, length - i)) % PRIMEBASE;
+            stringPiece.addFirst(cur);
+        }
     }
 
     /**
@@ -32,7 +60,9 @@ class RollingString{
      * Should be a constant-time operation.
      */
     public void addChar(char c) {
-        /* FIX ME */
+        hashSum = (hashSum + PRIMEBASE - hashChar(stringPiece.removeFirst(), length)
+                + hashChar(c, 1)) % PRIMEBASE;
+        stringPiece.addLast(c);
     }
 
 
@@ -43,8 +73,12 @@ class RollingString{
      */
     public String toString() {
         StringBuilder strb = new StringBuilder();
-        /* FIX ME */
-        return "";
+        for (char c
+                :
+                stringPiece) {
+            strb.append(c);
+        }
+        return strb.toString();
     }
 
     /**
@@ -52,8 +86,7 @@ class RollingString{
      * Should be a constant-time operation.
      */
     public int length() {
-        /* FIX ME */
-        return -1;
+        return length;
     }
 
 
@@ -64,8 +97,22 @@ class RollingString{
      */
     @Override
     public boolean equals(Object o) {
-        /* FIX ME */
-        return false;
+        if (!o.getClass().equals(RollingString.class)) {
+            return false;
+        }
+        Iterator<Character> iThis = stringPiece.iterator();
+        char[] charArrayO = o.toString().toCharArray();
+        for (char charO
+                :
+                charArrayO) {
+            if (!iThis.hasNext()) {
+                return false;
+            }
+            if (!iThis.next().equals(charO)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -74,7 +121,6 @@ class RollingString{
      */
     @Override
     public int hashCode() {
-        /* FIX ME */
-        return -1;
+        return hashSum;
     }
 }
