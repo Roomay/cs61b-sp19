@@ -8,13 +8,13 @@ public class SeparableEnemySolver {
 
     /**
      * Creates a SeparableEnemySolver for a file with name filename. Enemy
-     * relationships are biderectional (if A is an enemy of B, B is an enemy of A).
+     * relationships are bidirectional (if A is an enemy of B, B is an enemy of A).
      */
     SeparableEnemySolver(String filename) throws java.io.FileNotFoundException {
         this.g = graphFromFile(filename);
     }
 
-    /** Alterntive constructor that requires a Graph object. */
+    /** Alternative constructor that requires a Graph object. */
     SeparableEnemySolver(Graph g) {
         this.g = g;
     }
@@ -23,10 +23,44 @@ public class SeparableEnemySolver {
      * Returns true if input is separable, false otherwise.
      */
     public boolean isSeparable() {
-        // TODO: Fix me
-        return false;
+        HashMap<String, Integer> separation = new HashMap<>();
+        Set<String> predecessor = new HashSet<>();
+        for (String invitee
+                :
+                g.labels()) {
+            if (!predecessor.contains(invitee)
+                    && !arrange(invitee, predecessor, g, separation, 0)) {
+                return false;
+            }
+        }
+        return true;
     }
 
+    /**
+     * Returns true if all connected string nodes are separated well.
+     */
+
+    private boolean arrange(String invitee, Set<String> predecessor, Graph graph,
+                            Map<String, Integer> status, int group) {
+        if (!status.containsKey(invitee)) {
+            status.put(invitee, group);
+        } else {
+            if (!status.get(invitee).equals(group)) {
+                return false;
+            }
+        }
+        predecessor.add(invitee);
+        Set<String> successorNeighbors = graph.neighbors(invitee);
+        successorNeighbors.removeAll(predecessor);
+        for (String neighbor
+                :
+                successorNeighbors) {
+            if (!arrange(neighbor, predecessor, graph, status, 1 - group)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /* HELPERS FOR READING IN CSV FILES. */
 
@@ -45,7 +79,7 @@ public class SeparableEnemySolver {
                 }
                 continue;
             }
-            assert(lines.get(i).size() == 2);
+            assert (lines.get(i).size() == 2);
             input.connect(lines.get(i).get(0), lines.get(i).get(1));
         }
         return input;
