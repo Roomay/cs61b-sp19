@@ -1,6 +1,11 @@
 package bearmaps;
 
 import org.junit.Test;
+
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+import edu.princeton.cs.algs4.Stopwatch;
+
 import static org.junit.Assert.*;
 
 public class ArrayHeapMinPQTest {
@@ -54,6 +59,37 @@ public class ArrayHeapMinPQTest {
         pq.removeSmallest();
         pq.removeSmallest();
         assertEquals(pq.size(), 0);
+    }
 
+    @Test
+    public void testRuntime() {
+        ArrayHeapMinPQ<Integer> pq = new ArrayHeapMinPQ<>();
+
+        long start = System.currentTimeMillis();
+        Stopwatch sw = new Stopwatch();
+
+        for (int i = 0; i < 100000; i++) {
+            pq.add(i, ThreadLocalRandom.current().nextDouble(0, 100));
+        }
+
+        System.out.println("Average time per operation: " + sw.elapsedTime() / 100000 + " seconds.");
+
+        for (int i = 0; i < 3000; i++) {
+            pq.changePriority(ThreadLocalRandom.current().nextInt(0, 100000),
+                    ThreadLocalRandom.current().nextDouble(0, 100));
+        }
+
+        System.out.println("Average time per operation: " + sw.elapsedTime() / 103000 + " seconds.");
+
+        for (int i = 0; i < 50000; i++) {
+            pq.removeSmallest();
+        }
+
+
+
+        long end = System.currentTimeMillis();
+
+        System.out.println("Total time elapsed: " + (end - start) / 1000.0 + " seconds.");
+        System.out.println("Total time elapsed: " + sw.elapsedTime() + " seconds.");
     }
 }
