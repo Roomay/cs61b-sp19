@@ -24,12 +24,12 @@ public class SeparableEnemySolver {
      */
     public boolean isSeparable() {
         HashMap<String, Integer> separation = new HashMap<>();
-        Set<String> predecessor = new HashSet<>();
+        Set<String> predecessors = new HashSet<>();
         for (String invitee
                 :
                 g.labels()) {
-            if (!predecessor.contains(invitee)
-                    && !arrange(invitee, predecessor, g, separation, 0)) {
+            if (!predecessors.contains(invitee)
+                    && !arrange(invitee, predecessors, g, separation, 0)) {
                 return false;
             }
         }
@@ -40,7 +40,7 @@ public class SeparableEnemySolver {
      * Returns true if all connected string nodes are separated well.
      */
 
-    private boolean arrange(String invitee, Set<String> predecessor, Graph graph,
+    private boolean arrange(String invitee, Set<String> predecessors, Graph graph,
                             Map<String, Integer> status, int group) {
         if (!status.containsKey(invitee)) {
             status.put(invitee, group);
@@ -49,13 +49,16 @@ public class SeparableEnemySolver {
                 return false;
             }
         }
-        predecessor.add(invitee);
+        /* Pass a set predecessors to store the visited invitees.*/
+        predecessors.add(invitee);
+
+        /* For the set of neighbors for determination, exclude the visited invitees by the set predecessors.*/
         Set<String> successorNeighbors = graph.neighbors(invitee);
-        successorNeighbors.removeAll(predecessor);
+        successorNeighbors.removeAll(predecessors);
         for (String neighbor
                 :
                 successorNeighbors) {
-            if (!arrange(neighbor, predecessor, graph, status, 1 - group)) {
+            if (!arrange(neighbor, predecessors, graph, status, 1 - group)) {
                 return false;
             }
         }
