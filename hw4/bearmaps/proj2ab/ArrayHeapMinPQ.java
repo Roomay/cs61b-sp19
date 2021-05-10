@@ -1,4 +1,4 @@
-package bearmaps;
+package bearmaps.proj2ab;
 
 import java.util.*;
 
@@ -9,7 +9,7 @@ public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
 
     public ArrayHeapMinPQ() {
         minHeap = new ArrayList<>();
-        minHeap.add(null);
+        minHeap.add(null); // First node as a sentinel, in convenience for indices.
         keyMap = new HashMap<>();
     }
 
