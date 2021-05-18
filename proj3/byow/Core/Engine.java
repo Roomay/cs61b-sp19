@@ -6,10 +6,12 @@ import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
 import edu.princeton.cs.algs4.QuickUnionUF;
+import edu.princeton.cs.algs4.TarjanSCC;
+
 
 import java.util.HashMap;
-import java.util.InputMismatchException;
 import java.util.Random;
+import java.util.Stack;
 
 public class Engine {
     TERenderer ter = new TERenderer();
@@ -20,9 +22,10 @@ public class Engine {
 
     /* Tables and Sets storing the rooms and their connection details*/
     private HashMap<Position, RectangleSize> roomsSize;
-    private HashMap<Integer, Position> roomsNo;
+    private HashMap<Position, Integer> roomsNo;
     private QuickUnionUF roomsUnionSet;
-    private KDTree<Position> vertices;
+    private KDTree<Position> vertices; // store each corner of each room.
+    private KDTree<Position> rooms; // store lowerleft corner of each room.
 
 
     class Position {
@@ -79,19 +82,27 @@ public class Engine {
         //
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
-        if (input.charAt(0) != 'N' && input.charAt(0) != 'n') {
-            throw new InputMismatchException();
-        }
+
 
         InputSource str = new StringInputDevice(input);
-        str.getNextKey();
         char c;
         StringBuilder buffer = new StringBuilder();
         while (str.possibleNextInput()) {
             c = str.getNextKey();
+            if (c == 'N' || c == 'n') {
+                break; // break and stage to seed input.
+            } else if (c == 'Q' || c == 'q') {
+                System.exit(0); // quit.
+            } else if (c == 'L' || c == 'l') {
+                break; // load a game from a file.
+            }
+        }
+        //
+        while (str.possibleNextInput()) {
+            c = str.getNextKey();
             if (c >= '0' && c <= '9') {
                 buffer.append(c);
-            } else {
+            } else if (c == 'S' || c == 's'){
                 break;
             }
         }
@@ -118,21 +129,20 @@ public class Engine {
     }
 
     private void generateWorldBySeed(TETile[][] tiles, long seed) {
-        int height = tiles[0].length;
-        int width = tiles.length;
         Random generator = new Random(seed);
         int numOfRooms = 20 + generator.nextInt(20);
         addRooms(tiles, numOfRooms, generator);
-        //addHallways(tiles, generator);
+        addHallways(tiles, generator);
+        addLockedDoor(tiles, generator);
     }
 
     private void addRooms(TETile[][] tiles, int nums, Random generator) {
-        int width = tiles[0].length;
-        int height = tiles.length;
         roomsSize = new HashMap<>(nums);
         roomsNo = new HashMap<>(nums);
         roomsUnionSet = new QuickUnionUF(nums + 1);
         vertices = new KDTree<>();
+        rooms = new KDTree<>();
+        // draw rectangles;
         for (int i = 1; i <= nums; i++) {
             Position leftLowerCorner;
             do {
@@ -144,7 +154,8 @@ public class Engine {
             int rectWidth = 1 + generator.nextInt(RECTANGLE_BASE_SIZE + (nums - i) / 10);
             int rectHeight = 1 + generator.nextInt(RECTANGLE_BASE_SIZE + (nums - i) / 10);
             addSingleRoom(tiles, leftLowerCorner, rectHeight, rectWidth, generator);
-            roomsNo.put(nums, leftLowerCorner);
+            roomsNo.put(leftLowerCorner, i);
+            rooms.put(leftLowerCorner, leftLowerCorner.x, leftLowerCorner.y);
         }
     }
 
@@ -200,11 +211,190 @@ public class Engine {
         return (p.x + width + 1 >= WIDTH || p.y + height + 1 >= HEIGHT || vertices.barrierInRange(p.x, p.y, height, width, roomsSize));
     }
 
+    private void addHallways(TETile[][] tiles, Random generator) {
+        if (rooms.getRoot() == null) {
+            return;
+        }
+        Stack<KDTree<Position>.kdtNode<Position>> traversalHelper = new Stack<>();
+        KDTree<Position>.kdtNode<Position> cur = rooms.getRoot();
+        while (!traversalHelper.isEmpty() || cur != null) {
+            if (cur != null) {
+                if (cur.leftChild != null) {
+                    Position p1 = cur.key;
+                    Position p2 = cur.leftChild.key;
+                    if (!roomsUnionSet.connected(roomsNo.get(p1), roomsNo.get(p2))) {
+                        connect(tiles, p1, p2, generator);
+                    }
+                }
+                traversalHelper.push(cur);
+                cur = cur.leftChild;
+            } else {
+                cur = traversalHelper.pop();
+                if (cur.rightChild != null) {
+                    Position p1 = cur.key;
+                    Position p2 = cur.rightChild.key;
+                    if (!roomsUnionSet.connected(roomsNo.get(p1), roomsNo.get(p2))) {
+                        connect(tiles, p1, p2, generator);
+                    }
+                }
+                cur = cur.rightChild;
+            }
+        }
+    }
+    private void connect(TETile[][] tiles, Position p1, Position p2, Random generator) {
+        /* Mark the rooms as connected*/
+        roomsUnionSet.union(roomsNo.get(p1), roomsNo.get(p2));
+        int x1 = p1.x;
+        int x2 = p2.x;
+        int y1 = p1.y;
+        int y2 = p2.y;
+        int width1 = roomsSize.get(p1).width;
+        int width2 = roomsSize.get(p2).width;
+        int height1 = roomsSize.get(p1).height;
+        int height2 = roomsSize.get(p2).height;
+        if (x1 + width1 > x2 && x1 < x2 + width2) { // x overlap
+            int xStart = Integer.max(x1 + 1, x2 + 1); // Random lower bound.
+            int xEnd = Integer.min(x1 + width1, x2 + width2); // Random upper bound.
+            int xWay = xStart + generator.nextInt(xEnd - xStart + 1);
+            int yStart = Integer.min(y1 + height1 + 1, y2 + height2 + 1);
+            int yEnd = Integer.max(y1, y2);
+            for (int i = yStart; i <= yEnd; i++) {
+                tiles[xWay][i] = Tileset.FLOOR;
+                if (tiles[xWay - 1][i].character() == ' ') {
+                    tiles[xWay - 1][i] = Tileset.WALL;
+                }
+                if (tiles[xWay + 1][i].character() == ' ') {
+                    tiles[xWay + 1][i] = Tileset.WALL;
+                }
+            }
+        } else if (y1 + height1 > y2 && y1 < y2 + height2) { // y overlap
+            int yStart = Integer.max(y1 +1, y2 + 1); // Random lower bound.
+            int yEnd = Integer.min(y1 + height1, y2 + height2); // Random upper bound.
+            int yWay = yStart + generator.nextInt(yEnd - yStart + 1);
+            int xStart = Integer.min(x1 + width1 + 1, x2 + width2 + 1);
+            int xEnd = Integer.max(x1, x2);
+            for (int i = xStart; i <= xEnd; i++) {
+                tiles[i][yWay] = Tileset.FLOOR;
+                if (tiles[i][yWay - 1].character() == ' ') {
+                    tiles[i][yWay - 1] = Tileset.WALL;
+                }
+                if (tiles[i][yWay + 1].character() == ' ') {
+                    tiles[i][yWay + 1] = Tileset.WALL;
+                }
+            }
+        } else { // non overlap
+            // determine in which direction (horizontal-span or vertical-span) first to breakout
+            if (generator.nextBoolean()) { // vertical-span first
+                int xGenLowerBound = Integer.max(x1 + 1, x2 + width2 + 2);
+                int xGenUpperBound = Integer.min(x1 + width1 + 1, x2);
+                int xOut = x1 > x2 ?  xGenLowerBound + generator.nextInt(x1 + width1 + 1 - xGenLowerBound) :
+                        x1 + 1 + generator.nextInt(xGenUpperBound - x1 - 1);
+                int yCorner = y2 + 1 + generator.nextInt(height2);
+
+                // pre-draw the corner.
+                for (int i = xOut - 1; i <= xOut + 1; i++) {
+                    for (int j = yCorner - 1; j <= yCorner + 1; j++) {
+                        if (tiles[i][j].character() == ' ') {
+                            tiles[i][j] = Tileset.WALL;
+                        }
+                    }
+                }
+
+                // hallway before the corner.
+                for (int i = y1 + 1; (y1 < y2 && i <= yCorner) || (y1 > y2 && i >= yCorner) ; i += (y1 < y2) ? 1 : -1) {
+                    tiles[xOut][i] = Tileset.FLOOR;
+                    if (tiles[xOut - 1][i].character() == ' ') {
+                        tiles[xOut - 1][i] = Tileset.WALL;
+                    }
+                    if (tiles[xOut + 1][i].character() == ' ') {
+                        tiles[xOut + 1][i] = Tileset.WALL;
+                    }
+                }
+
+                // hallway after the corner.
+                for (int i = xOut; (x1 < x2 && i <= x2) || (x1 > x2 && i >= x2 + width2 + 1) ; i += (x1 < x2) ? 1 : -1) {
+                    tiles[i][yCorner] = Tileset.FLOOR;
+                    if (tiles[i][yCorner - 1].character() == ' ') {
+                        tiles[i][yCorner - 1] = Tileset.WALL;
+                    }
+                    if (tiles[i][yCorner + 1].character() == ' ') {
+                        tiles[i][yCorner + 1] = Tileset.WALL;
+                    }
+                }
+            } else { // horizontal-span first
+                int yGenLowerBound = Integer.max(y1 + 1, y2 + height2 + 2);
+                int yGenUpperBound = Integer.min(y1 + height1 + 1, y2);
+                int yOut = y1 > y2 ?  yGenLowerBound + generator.nextInt(y1 + height1 + 1 - yGenLowerBound) :
+                        y1 + 1 + generator.nextInt(yGenUpperBound - y1 - 1);
+                int xCorner = x2 + 1 + generator.nextInt(width2);
+
+                // pre-draw the corner.
+                for (int i = yOut - 1; i <= yOut + 1; i++) {
+                    for (int j = xCorner - 1; j <= xCorner + 1; j++) {
+                        if (tiles[j][i].character() == ' ') {
+                            tiles[j][i] = Tileset.WALL;
+                        }
+                    }
+                }
+
+                // hallway before the corner.
+                for (int i = x1 + 1; (x1 < x2 && i <= xCorner) || (x1 > x2 && i >= xCorner) ; i += (x1 < x2) ? 1 : -1) {
+                    tiles[i][yOut] = Tileset.FLOOR;
+                    if (tiles[i][yOut - 1].character() == ' ') {
+                        tiles[i][yOut - 1] = Tileset.WALL;
+                    }
+                    if (tiles[i][yOut + 1].character() == ' ') {
+                        tiles[i][yOut + 1] = Tileset.WALL;
+                    }
+                }
+
+                // hallway after the corner.
+                for (int i = yOut; (y1 < y2 && i <= y2) || (y1 > y2 && i >= y2 + height2 + 1) ; i += (y1 < y2) ? 1 : -1) {
+                    tiles[xCorner][i] = Tileset.FLOOR;
+                    if (tiles[xCorner - 1][i].character() == ' ') {
+                        tiles[xCorner - 1][i] = Tileset.WALL;
+                    }
+                    if (tiles[xCorner + 1][i].character() == ' ') {
+                        tiles[xCorner + 1][i] = Tileset.WALL;
+                    }
+                }
+            }
+        }
+    }
+
+    private void addLockedDoor(TETile[][] tiles, Random generator) {
+        int width = tiles[0].length;
+        int height = tiles.length;
+        int ptr, x, y;
+        do {
+            ptr = generator.nextInt(height * width);
+            x = ptr % width;
+            y = ptr / height;
+        } while (!isOpenWall(tiles, x, y));
+
+        tiles[x][y] = Tileset.LOCKED_DOOR;
+    }
+
+    private boolean isOpenWall(TETile[][] tiles, int x, int y) {
+        int width = tiles[0].length;
+        int height = tiles.length;
+        if (!(tiles[x][y].character() == '#')) {
+            return false;
+        }
+        if ((x < width - 1 && tiles[x + 1][y].character() == '·')
+                || (x > 0 && tiles[x - 1][y].character() == '·')
+                || (y < height - 1 && tiles[x][y + 1].character() == '·')
+                || (y > 0 && tiles[x][y - 1].character() == '·')) {
+            return true;
+        }
+        return false;
+    }
+
     public static void main(String[] args) {
         Engine e = new Engine();
         TERenderer ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
-        TETile[][] testWorld = e.interactWithInputString("n123");
+        TETile[][] testWorld = e.interactWithInputString("n3412S");
 
         ter.renderFrame(testWorld);
     }

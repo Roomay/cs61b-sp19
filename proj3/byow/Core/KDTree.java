@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Stack;
 
-public class KDTree<K> {
+class KDTree<K> {
     private kdtNode<K> root;
     private static final int COORDINATE_X = 0;
     private static final int COORDINATE_Y = 1;
@@ -32,7 +32,7 @@ public class KDTree<K> {
         return node;
     }
 
-    private class kdtNode<K> {
+    public class kdtNode<K> {
         K key;
         int posX;
         int posY;
@@ -66,6 +66,9 @@ public class KDTree<K> {
 
     public void put(K point, int x, int y) {
         root = put(point, x, y, root, COORDINATE_X);
+    }
+    public kdtNode<K> getRoot() {
+        return root;
     }
 
     public boolean barrierInRange(int x, int y, int height, int width, Map<K, Engine.RectangleSize> roomMap) {
