@@ -17,8 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static bearmaps.proj2c.utils.Constants.SEMANTIC_STREET_GRAPH;
-import static bearmaps.proj2c.utils.Constants.ROUTE_LIST;
+import static bearmaps.proj2c.utils.Constants.*;
 
 /**
  * Handles requests from the web browser for map images. These images
@@ -84,11 +83,87 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
      */
     @Override
     public Map<String, Object> processRequest(Map<String, Double> requestParams, Response response) {
-        //System.out.println("yo, wanna know the parameters given by the web browser? They are:");
-        //System.out.println(requestParams);
+        System.out.println("yo, wanna know the parameters given by the web browser? They are:");
+        System.out.println(requestParams);
         Map<String, Object> results = new HashMap<>();
-        System.out.println("Since you haven't implemented RasterAPIHandler.processRequest, nothing is displayed in "
-                + "your browser.");
+        boolean query_success = true;
+        double ulLat = requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[0]),
+                ulLon = requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[1]),
+                lrLat = requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[2]),
+                lrLon = requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[3]),
+                w = requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[4]),
+                h =requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[5]);
+        /* input integrity check*/
+        if (Double.compare(ulLat, lrLat) < 0
+                || Double.compare(ulLon, lrLon) > 0
+                || Double.compare(ulLat, ROOT_LRLAT) <= 0
+                || Double.compare(ulLon, ROOT_LRLON) >= 0
+                || Double.compare(lrLat, ROOT_ULLAT) >= 0
+                || Double.compare(lrLon, ROOT_ULLON) <= 0
+                || w < 0
+                || h < 0) {
+            query_success = false;
+        }
+        /* determine to use which depth by lonDPP*/
+        int depth = -1;
+        double lonDPP = (lrLon - ulLon) / w;
+        double diffLon = ROOT_LRLON - ROOT_ULLON;
+        double diffLat = ROOT_ULLAT - ROOT_LRLAT;
+        double dthLonDPP;
+        double dthLatDPP;
+        do {
+            depth++;
+            dthLonDPP = diffLon / (TILE_SIZE * (1 << depth));
+            dthLatDPP = diffLat / (TILE_SIZE * (1 << depth));
+        } while (Double.compare(dthLonDPP, lonDPP) > 0 && depth < 7);
+
+
+        /* determine which images to output in the String[][]*/
+        double ulLonOffSet = ulLon - ROOT_ULLON;
+        double ulLatOffSet = ROOT_ULLAT - ulLat;
+        double lrLonOffSet = lrLon - ROOT_ULLON;
+        double lrLatOffSet = ROOT_ULLAT - lrLat;
+        double blockLon = dthLonDPP * TILE_SIZE;
+        double blockLat = dthLatDPP * TILE_SIZE;
+        int ulX = Integer.max((int) (ulLonOffSet / blockLon), 0);
+        int ulY = Integer.max((int) (ulLatOffSet / blockLat), 0);
+        int lrX = Integer.min((int) (lrLonOffSet / blockLon), 1 << depth);
+        int lrY = Integer.min((int) (lrLatOffSet / blockLat), 1 << depth);
+        String[][] render_grid = new String[lrY - ulY + 1][lrX - ulX + 1];
+        for (int i = ulX; i <= lrX; i++) {
+            for (int j = ulY; j <= lrY; j++) {
+                // rebuild the string generate algorithm
+                StringBuilder sb = new StringBuilder();
+                sb.append('d');
+                sb.append(depth);
+                sb.append("_x");
+                sb.append(i);
+                sb.append("_y");
+                sb.append(j);
+                sb.append(".png");
+                render_grid[j - ulY][i - ulX] = sb.toString();
+            }
+        }
+
+        /* miscellaneous*/
+        double raster_ul_lon = ROOT_ULLON + blockLon * ulX;
+        double raster_ul_lat = ROOT_ULLAT - blockLat * ulY;
+        double raster_lr_lon = ROOT_ULLON + blockLon * (lrX + 1);
+        double raster_lr_lat = ROOT_ULLAT - blockLat * (lrY + 1);
+
+
+        /* result collection*/
+        results.put(REQUIRED_RASTER_RESULT_PARAMS[0], render_grid);
+        results.put(REQUIRED_RASTER_RESULT_PARAMS[1], raster_ul_lon);
+        results.put(REQUIRED_RASTER_RESULT_PARAMS[2], raster_ul_lat);
+        results.put(REQUIRED_RASTER_RESULT_PARAMS[3], raster_lr_lon);
+        results.put(REQUIRED_RASTER_RESULT_PARAMS[4], raster_lr_lat);
+        results.put(REQUIRED_RASTER_RESULT_PARAMS[5], depth);
+        results.put(REQUIRED_RASTER_RESULT_PARAMS[6], query_success);
+        /* System.out.println("Since you haven't implemented RasterAPIHandler.processRequest, nothing is displayed in "
+                + "your browser.");*/
+        System.out.println("The result parameters are as follows");
+        System.out.println(results);
         return results;
     }
 
@@ -205,8 +280,9 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
         BufferedImage tileImg = null;
         if (tileImg == null) {
             try {
-                File in = new File(imgPath);
-                tileImg = ImageIO.read(in);
+//                File in = new File(imgPath);
+//                tileImg = ImageIO.read(in);
+                tileImg = ImageIO.read(Thread.currentThread().getContextClassLoader().getResource(imgPath));
             } catch (IOException | NullPointerException e) {
                 e.printStackTrace();
             }

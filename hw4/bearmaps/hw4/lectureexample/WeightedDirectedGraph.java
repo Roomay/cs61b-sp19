@@ -20,7 +20,6 @@ public class WeightedDirectedGraph implements AStarGraph<Integer> {
     }
 
     private EdgeList[] adj;
-
     public WeightedDirectedGraph(int V) {
         adj = new EdgeList[V];
         for (int i = 0; i < V; i += 1) {
