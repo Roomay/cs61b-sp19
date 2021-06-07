@@ -2,7 +2,6 @@ package bearmaps;
 
 import org.junit.Test;
 
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import edu.princeton.cs.algs4.Stopwatch;
 
@@ -15,11 +14,17 @@ public class ArrayHeapMinPQTest {
 
         assertEquals(pq.size(), 0);
 
-        pq.add(3, 3);
-        pq.add(5, 5);
-        pq.add(1, 1);
-        pq.add(4, 4);
-        pq.add(2, 2);
+        pq.add(3, 1);
+        pq.add(5, 4);
+        pq.add(1, 2);
+        pq.add(4, 5);
+        pq.add(2, 3);
+
+        pq.changePriority(3, 3);
+        pq.changePriority(5, 5);
+        pq.changePriority(1, 1);
+        pq.changePriority(4, 4);
+        pq.changePriority(2, 2);
 
         assertEquals(pq.size(), 5);
 
@@ -69,20 +74,32 @@ public class ArrayHeapMinPQTest {
         Stopwatch sw = new Stopwatch();
 
         for (int i = 0; i < 100000; i++) {
+            /*
+            double item = ThreadLocalRandom.current().nextDouble(0, 100);
+            pq.add(item, item);
+            */
             pq.add(i, ThreadLocalRandom.current().nextDouble(0, 100));
         }
 
         System.out.println("Average time per operation: " + sw.elapsedTime() / 100000 + " seconds.");
 
-        for (int i = 0; i < 3000; i++) {
-            pq.changePriority(ThreadLocalRandom.current().nextInt(0, 100000),
-                    ThreadLocalRandom.current().nextDouble(0, 100));
+        for (int i = 0; i < 100000; i++) {
+            /*
+            double item = ThreadLocalRandom.current().nextDouble(0, 100);
+            pq.changePriority(item, item);
+            */
+            pq.changePriority(i, i);
         }
 
         System.out.println("Average time per operation: " + sw.elapsedTime() / 103000 + " seconds.");
 
-        for (int i = 0; i < 50000; i++) {
-            pq.removeSmallest();
+        double curItem = 0.0;
+        double lastItem = 0.0;
+        curItem = pq.removeSmallest();
+        for (int i = 1; i < 100000; i++) {
+            lastItem = curItem;
+            curItem = pq.removeSmallest();
+            assertTrue(Double.compare(lastItem, curItem) <= 0);
         }
 
 

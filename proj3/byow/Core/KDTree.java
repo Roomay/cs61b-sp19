@@ -1,12 +1,13 @@
 package byow.Core;
 
 
+import java.io.Serializable;
 import java.util.HashSet;
 
 import java.util.Map;
 import java.util.Stack;
 
-class KDTree<K> {
+class KDTree<K> implements Serializable {
     private kdtNode<K> root;
     private static final int COORDINATE_X = 0;
     private static final int COORDINATE_Y = 1;

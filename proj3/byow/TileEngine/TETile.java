@@ -1,6 +1,8 @@
 package byow.TileEngine;
 
 import java.awt.Color;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Random;
 
