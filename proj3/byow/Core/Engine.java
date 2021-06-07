@@ -14,10 +14,7 @@ import edu.princeton.cs.introcs.StdDraw;
 
 import java.awt.*;
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Stack;
+import java.util.*;
 
 public class Engine {
 
@@ -32,7 +29,7 @@ public class Engine {
     private HashMap<Position, RectangleSize> roomsSize;
     private HashMap<Position, Integer> roomsNo;
     private QuickUnionUF roomsUnionSet;
-    private KDTree<Position> vertices; // store each corner of each room.
+    private Set<Position> vertices; // store each corner of each room.
     private KDTree<Position> rooms; // store lowerleft corner of each room.
 
     /* Avatar Details. */
@@ -241,6 +238,17 @@ public class Engine {
             this.x = x;
             this.y = y;
         }
+        @Override
+        public boolean equals(Object obj) {
+            if (obj.getClass() != Position.class) {
+                return false;
+            }
+            return (this.x == ((Position) obj).x && this.y == ((Position) obj).y);
+        }
+        @Override
+        public int hashCode() {
+            return x * HEIGHT + y;
+        }
     }
 
     class RectangleSize {
@@ -362,7 +370,7 @@ public class Engine {
         roomsSize = new HashMap<>(nums);
         roomsNo = new HashMap<>(nums);
         roomsUnionSet = new QuickUnionUF(nums + 1);
-        vertices = new KDTree<>();
+        vertices = new HashSet<>();
         rooms = new KDTree<>();
         // draw rectangles;
         for (int i = 1; i <= nums; i++) {
@@ -420,17 +428,31 @@ public class Engine {
         }
 
         /* Update KDTree for collision check.*/
-        vertices.put(p, leftBar, bottomBar);
-        vertices.put(new Position(leftBar, topBar), leftBar, topBar);
-        vertices.put(new Position(rightBar, topBar), rightBar, topBar);
-        vertices.put(new Position(rightBar, bottomBar), rightBar, bottomBar);
+        vertices.add(p);
+        vertices.add(new Position(leftBar, topBar));
+        vertices.add(new Position(rightBar, topBar));
+        vertices.add(new Position(rightBar, bottomBar));
         /* Update Room's size for hallway generation.*/
         roomsSize.put(p, new RectangleSize(height, width)); // Put the final size into the HashMap.
         //System.out.println("base position: " + p.x + ", " + p.y + "-- size : width " + width + ", height " + height); // test
     }
 
     private boolean isCollided(Position p, int height, int width) {
-        return (p.x + width + 1 >= WIDTH || p.y + height + 1 >= HEIGHT || vertices.barrierInRange(p.x, p.y, height, width, roomsSize));
+        if (p.x + width + 1 >= WIDTH || p.y + height + 1 >= HEIGHT) {
+            return true;
+        }
+
+        int rightBar = p.x + width + 2;
+        int topBar = p.y + height + 2;
+
+        for (int i = p.x; i < rightBar; i++) {
+            for (int j = 0; j < topBar; j++) {
+                if (vertices.contains(new Position(i, j))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void addHallways(TETile[][] tiles, Random generator) {
@@ -585,13 +607,13 @@ public class Engine {
     }
 
     private void addLockedDoor(TETile[][] tiles, Random generator) {
-        int width = tiles[0].length;
-        int height = tiles.length;
+        int width = tiles.length;
+        int height = tiles[0].length;
         int ptr, x, y;
         do {
             ptr = generator.nextInt(height * width);
             x = ptr % width;
-            y = ptr / height;
+            y = ptr / width;
         } while (!isOpenWall(tiles, x, y));
 
         tiles[x][y] = Tileset.LOCKED_DOOR;
@@ -600,13 +622,13 @@ public class Engine {
     private void addAvatar(TETile[][] tiles, Random generator, Position avatar) {
         int x, y;
         if (avatar == null) {
-            int width = tiles[0].length;
-            int height = tiles.length;
+            int width = tiles.length;
+            int height = tiles[0].length;
             int ptr;
             do {
                 ptr = generator.nextInt(height * width);
                 x = ptr % width;
-                y = ptr / height;
+                y = ptr / width;
             } while (tiles[x][y].character() != '·');
 
             avatarPos = new Position(x, y);
@@ -620,8 +642,8 @@ public class Engine {
     }
 
     private boolean isOpenWall(TETile[][] tiles, int x, int y) {
-        int width = tiles[0].length;
-        int height = tiles.length;
+        int width = tiles.length;
+        int height = tiles[0].length;
         if (!(tiles[x][y].character() == '#')) {
             return false;
         }
@@ -636,7 +658,9 @@ public class Engine {
 
 
 
+    /*
     public static void main(String[] args) {
+
         Engine e = new Engine();
         e.interactWithKeyboard();
 
@@ -646,4 +670,5 @@ public class Engine {
 
         //e.ter.renderFrame(testWorld);
     }
+    */
 }
